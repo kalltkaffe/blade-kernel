@@ -272,90 +272,93 @@ static void synaptics_ts_work_func(struct work_struct *work)
 	struct synaptics_ts_data *ts = container_of(work, struct synaptics_ts_data, work);
 	finger=0;
 	ret = synaptics_i2c_read(ts->client, 0x14, buf, 16);
-	if (ret < 0){
-   	printk(KERN_ERR "synaptics_ts_work_func: synaptics_i2c_write failed, go to poweroff.\n");
-    gpio_direction_output(GPIO_TOUCH_EN_OUT, 0);
-    msleep(200);
-    gpio_direction_output(GPIO_TOUCH_EN_OUT, 1);
-    msleep(200);
-  }
-  else
-  {
-			x = (uint16_t) buf[2] << 4| (buf[4] & 0x0f) ; 
-			y = (uint16_t) buf[3] << 4| ((buf[4] & 0xf0) >> 4); 
-			pressure = buf[6];
-			w = buf[5] >> 4;
-			z = buf[5]&0x0f;
-			finger = buf[1] & 0x3;
-	
-			x2 = (uint16_t) buf[7] << 4| (buf[9] & 0x0f) ;  
-			y2 = (uint16_t) buf[8] << 4| ((buf[9] & 0xf0) >> 4); 
+	if (ret < 0) {
+   		printk(KERN_ERR "synaptics_ts_work_func: synaptics_i2c_write failed, go to poweroff.\n");
+    		gpio_direction_output(GPIO_TOUCH_EN_OUT, 0);
+    		msleep(200);
+    		gpio_direction_output(GPIO_TOUCH_EN_OUT, 1);
+	    	msleep(200);
+  	}
+  	else
+  	{
+		x = (uint16_t) buf[2] << 4| (buf[4] & 0x0f) ; 
+		y = (uint16_t) buf[3] << 4| ((buf[4] & 0xf0) >> 4); 
+		pressure = buf[6];
+		w = buf[5] >> 4;
+		z = buf[5]&0x0f;
+		finger = buf[1] & 0x3;
 
+		x2 = (uint16_t) buf[7] << 4| (buf[9] & 0x0f) ;  
+		y2 = (uint16_t) buf[8] << 4| ((buf[9] & 0xf0) >> 4); 
 	#ifdef CONFIG_MACH_JOE
-			y = 2787 - y;
-			y2 = 2787 - y2;
-	#endif		
-	
-			pressure2 = buf[11]; 
-			w2 = buf[10] >> 4; 
-			z2 = buf[10] & 0x0f;
-			finger2 = buf[1] & 0xc; 
-			gesture = buf[12];
-	
-			flick_x = buf[14];
-			flick_y = buf[15];
-			if((16==gesture)||(flick_x)||(flick_y))
-			{
-				if ((flick_x >0 )&& (abs(flick_x) > abs(flick_y))) 
-				direction = 1;
-				else if((flick_x <0 )&& (abs(flick_x) > abs(flick_y)))  
-				direction = 2;
-				else if ((flick_y >0 )&& (abs(flick_x) < abs(flick_y))) 
-				direction = 3;
-				else if ((flick_y <0 )&& (abs(flick_x) < abs(flick_y))) 
-				direction = 4;
+		y = 2787 - y;
+		y2 = 2787 - y2;
+	#endif
+		pressure2 = buf[11]; 
+		w2 = buf[10] >> 4; 
+		z2 = buf[10] & 0x0f;
+		finger2 = buf[1] & 0xc; 
+		gesture = buf[12];
 
-			}
-			
+		flick_x = buf[14];
+		flick_y = buf[15];
+		if((16==gesture)||(flick_x)||(flick_y))
+		{
+			if ((flick_x >0 )&& (abs(flick_x) > abs(flick_y))) 
+			direction = 1;
+			else if((flick_x <0 )&& (abs(flick_x) > abs(flick_y)))  
+			direction = 2;
+			else if ((flick_y >0 )&& (abs(flick_x) < abs(flick_y))) 
+			direction = 3;
+			else if ((flick_y <0 )&& (abs(flick_x) < abs(flick_y))) 
+			direction = 4;
+		}
+
+		pressure *= 2;
+		if (pressure > 255)
+			pressure = 255;
+
 #ifdef TOUCHSCREEN_DUPLICATED_FILTER
-	ret = duplicated_filter(ts, x,y,x2,y2, finger2, pressure);
+		ret = duplicated_filter(ts, x,y,x2,y2, finger2, pressure);
 	if (ret == 0) 
 	{
 #endif
-				input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, pressure);
-				input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, 10);
-				input_report_abs(ts->input_dev, ABS_MT_POSITION_X, x);
-				input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, y);
-				input_mt_sync(ts->input_dev);
+		input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, pressure);
+		input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, 10);
+		input_report_abs(ts->input_dev, ABS_MT_POSITION_X, x);
+		input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, y);
+		input_mt_sync(ts->input_dev);
 
-			if(finger2)
-			{
-				input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, pressure2);			
-				input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, 10);
-				input_report_abs(ts->input_dev, ABS_MT_POSITION_X, x2);
-				input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, y2);
-				input_mt_sync(ts->input_dev);
-			}
-			
-			input_sync(ts->input_dev);
+		if(finger2)
+		{
+			pressure2 *= 2;
+			if (pressure2 > 255)
+				pressure2 = 255;
+			input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, pressure2);
+			input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, 10);
+			input_report_abs(ts->input_dev, ABS_MT_POSITION_X, x2);
+			input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, y2);
+			input_mt_sync(ts->input_dev);
+		}
+		input_sync(ts->input_dev);
 	}
 #ifdef TOUCHSCREEN_DUPLICATED_FILTER
-	}	  	
-#endif	
-		#ifdef POLL_IN_INT
-		if(finger)
-		{
-			hrtimer_start(&ts->timer, ktime_set(0, polling_time), HRTIMER_MODE_REL);
-		}
-		else
-		{
-			hrtimer_cancel(&ts->timer);
-			enable_irq(ts->client->irq);
-		}
-		#else
-		if (ts->use_irq)
+	}
+#endif
+	#ifdef POLL_IN_INT
+	if(finger)
+	{
+		hrtimer_start(&ts->timer, ktime_set(0, polling_time), HRTIMER_MODE_REL);
+	}
+	else
+	{
+		hrtimer_cancel(&ts->timer);
 		enable_irq(ts->client->irq);
-		#endif
+	}
+	#else
+	if (ts->use_irq)
+		enable_irq(ts->client->irq);
+	#endif
 }
 
 static enum hrtimer_restart synaptics_ts_timer_func(struct hrtimer *timer)
@@ -501,21 +504,21 @@ static int synaptics_ts_probe(
 	ts->timer.function = synaptics_ts_timer_func;
 	ret = request_irq(client->irq, synaptics_ts_irq_handler, IRQF_TRIGGER_FALLING, "synaptics_touch", ts);
 	if(ret == 0)
-		{
-		ret = synaptics_i2c_write(ts->client, 0x26, 0x07); 
+	{
+		ret = synaptics_i2c_write(ts->client, 0x26, 0x07);
 		if (ret)
-		free_irq(client->irq, ts);
-		}
+			free_irq(client->irq, ts);
+	}
 	if(ret == 0)
 		ts->use_irq = 1;
 	else
 		dev_err(&client->dev, "request_irq failed\n");
 	#else
-   if (client->irq)
-    {
-        ret = request_irq(client->irq, synaptics_ts_irq_handler, IRQF_TRIGGER_FALLING, "synaptics_touch", ts);
+   	if (client->irq)
+    	{
+        	ret = request_irq(client->irq, synaptics_ts_irq_handler, IRQF_TRIGGER_FALLING, "synaptics_touch", ts);
 		if (ret == 0) {
-    ret = synaptics_i2c_write(ts->client, 0x26, 0x07);
+    			ret = synaptics_i2c_write(ts->client, 0x26, 0x07);
 			if (ret)
 				free_irq(client->irq, ts);
 		}
@@ -524,8 +527,8 @@ static int synaptics_ts_probe(
 		else
 			dev_err(&client->dev, "request_irq failed\n");
 	}
-    if (!ts->use_irq)
-    {
+    	if (!ts->use_irq)
+    	{
 		hrtimer_init(&ts->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 		ts->timer.function = synaptics_ts_timer_func;
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
@@ -584,6 +587,8 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 	int ret;
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
 
+	printk("TOUCH SUSPEND\n");
+
 	if (ts->use_irq)
 		disable_irq(client->irq);
 	else
@@ -591,14 +596,16 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 	ret = cancel_work_sync(&ts->work);
 	if (ret && ts->use_irq)
 		enable_irq(client->irq);
-    ret = synaptics_i2c_write(ts->client, 0x26, 0);
+    	ret = synaptics_i2c_write(ts->client, 0x26, 0);
 	if (ret < 0)
-        printk(KERN_ERR "synaptics_ts_suspend: synaptics_i2c_write failed\n");
+        	printk(KERN_ERR "synaptics_ts_suspend: synaptics_i2c_write failed\n");
 
-    ret = synaptics_i2c_write(client, 0x25, 0x01);
+//    	ret = synaptics_i2c_write(client, 0x25, 0x01);
+    	ret = synaptics_i2c_write(ts->client, 0x25, 0x01);
 	if (ret < 0)
-        printk(KERN_ERR "synaptics_ts_suspend: synaptics_i2c_write failed\n");
+	        printk(KERN_ERR "synaptics_ts_suspend: synaptics_i2c_write failed\n");
 
+	gpio_direction_output(GPIO_TOUCH_EN_OUT, 0);
 	return 0;
 }
 
@@ -606,18 +613,21 @@ static int synaptics_ts_resume(struct i2c_client *client)
 {
 	int ret;
 	struct synaptics_ts_data *ts = i2c_get_clientdata(client);
+
+
+	printk("TOUCH RESUME\n");
 	gpio_direction_output(GPIO_TOUCH_EN_OUT, 1);
-    ret = synaptics_i2c_write(ts->client, 0x25, 0x00);
+    	ret = synaptics_i2c_write(ts->client, 0x25, 0x00);
 	if (ts->use_irq)
 		enable_irq(client->irq);
 
 	if (!ts->use_irq)
 		hrtimer_start(&ts->timer, ktime_set(1, 0), HRTIMER_MODE_REL);
 	else
-		{
-        synaptics_i2c_write(ts->client, 0x26, 0x07);
+	{
+        	synaptics_i2c_write(ts->client, 0x26, 0x07);
 	    	synaptics_i2c_write(ts->client, 0x31, 0x7F);
-		}
+	}
 	return 0;
 }
 
