@@ -17,8 +17,6 @@
  *
  */
 
-//#define OVERCLOCK_AHB
-
 #include <linux/version.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -211,7 +209,7 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 4,  61440 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 122880 },
 	{ 0, 400000, ACPU_PLL_2, 2, 2, 133333, 2, 5, 122880 },
-#ifndef OVERCLOCK_AHB
+#ifndef CONFIG_OVERCLOCK_AHB
 /* Conservative AHB overclocking */
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 122880 },
 	{ 1, 600000, ACPU_PLL_2, 2, 1, 200000, 2, 7, 200000 },
@@ -447,7 +445,7 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s) {
 		udelay(50);
 	}
 
-#ifdef OVERCLOCK_AHB
+#ifdef CONFIG_OVERCLOCK_AHB
 	// Pump the PLL2 up another 19200kHz (overclock stock 600MHz from 595.2MHz to 604.8MHz)
 	if(hunt_s->pll==2 && hunt_s->a11clk_khz==600000) {
 		writel(63, PLLn_L_VAL(2));
