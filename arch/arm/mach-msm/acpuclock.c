@@ -205,14 +205,14 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 	{ 0, 19200, ACPU_PLL_TCXO, 0, 0, 19200, 0, 0, 30720 },
 	{ 0, 120000, ACPU_PLL_0, 4, 7,  60000, 1, 3,  61440 },
 	{ 1, 122880, ACPU_PLL_1, 1, 1,  61440, 1, 3,  61440 },
-	{ 0, 200000, ACPU_PLL_2, 2, 5,  66667, 2, 4,  61440 },
+	{ 0, 201600, ACPU_PLL_2, 2, 5,  67200, 2, 4,  61440 },
 	{ 1, 245760, ACPU_PLL_1, 1, 0, 122880, 1, 4,  61440 },
 	{ 1, 320000, ACPU_PLL_0, 4, 2, 160000, 1, 5, 122880 },
-	{ 0, 400000, ACPU_PLL_2, 2, 2, 133333, 2, 5, 122880 },
 #ifndef CONFIG_OVERCLOCK_AHB
 /* Conservative AHB overclocking */
+	{ 0, 403200, ACPU_PLL_2, 2, 2, 134400, 2, 5, 122880 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 160000, 2, 6, 122880 },
-	{ 1, 600000, ACPU_PLL_2, 2, 1, 200000, 2, 7, 200000 },
+	{ 1, 604800, ACPU_PLL_2, 2, 1, 201600, 2, 7, 200000 },
 	{ 1, 652800, ACPU_PLL_0, 4, 0, 217600, 2, 7, 200000 },
 	{ 1, 672000, ACPU_PLL_0, 4, 0, 224000, 2, 7, 200000 },
 	{ 1, 691200, ACPU_PLL_0, 4, 0, 230400, 2, 7, 200000 },
@@ -226,8 +226,9 @@ static struct clkctl_acpu_speed pll0_960_pll1_245_pll2_1200[] = {
 //	{ 1, 844800, ACPU_PLL_0, 4, 0, 281600, 2, 7, 200000 },
 #else
 /* Agressive AHB overclocking */
+	{ 0, 403200, ACPU_PLL_2, 2, 2, 201600, 1, 5, 200000 },
 	{ 1, 480000, ACPU_PLL_0, 4, 1, 240000, 1, 6, 200000 },
-	{ 1, 600000, ACPU_PLL_2, 2, 1, 300000, 1, 7, 200000 },
+	{ 1, 604800, ACPU_PLL_2, 2, 1, 302400, 1, 7, 200000 },
 	{ 1, 652800, ACPU_PLL_0, 4, 0, 326400, 1, 7, 200000 },
 	{ 1, 672000, ACPU_PLL_0, 4, 0, 336000, 1, 7, 200000 },
 	{ 1, 691200, ACPU_PLL_0, 4, 0, 345600, 1, 7, 200000 },
@@ -263,7 +264,8 @@ static struct clkctl_acpu_speed pll0_960_pll1_196_pll2_1200[] = {
 #define PLL_768_MHZ	40
 #define PLL_960_MHZ	50
 #define PLL_1056_MHZ	55
-#define PLL_1200_MHZ	62
+//#define PLL_1200_MHZ	62
+#define PLL_1200_MHZ	63
 
 #define PLL_CONFIG(m0, m1, m2) { \
 	PLL_##m0##_MHZ, PLL_##m1##_MHZ, PLL_##m2##_MHZ, \
@@ -439,19 +441,11 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s) {
 	}
 
 	// Perform overclocking if requested
-	if(hunt_s->pll==0 && hunt_s->a11clk_khz>600000) {
+	if(hunt_s->a11clk_khz>604800) {
 		// Change the speed of PLL0
 		writel(hunt_s->a11clk_khz/19200, PLLn_L_VAL(0));
 		udelay(50);
 	}
-
-#ifdef CONFIG_OVERCLOCK_AHB
-	// Pump the PLL2 up another 19200kHz (overclock stock 600MHz from 595.2MHz to 604.8MHz)
-	if(hunt_s->pll==2 && hunt_s->a11clk_khz==600000) {
-		writel(63, PLLn_L_VAL(2));
-		udelay(50);
-	}
-#endif
 
 	/* Program clock source and divider */
 	reg_clkctl = readl(A11S_CLK_CNTL_ADDR);
@@ -465,9 +459,9 @@ static void acpuclk_set_div(const struct clkctl_acpu_speed *hunt_s) {
 	writel(reg_clksel, A11S_CLK_SEL_ADDR);
 
 	// Recover from overclocking
-	if(hunt_s->pll==0 && hunt_s->a11clk_khz<=600000) {
+	if(hunt_s->a11clk_khz<=604800) {
 		// Restore the speed of PLL0
-		writel(50, PLLn_L_VAL(0));
+		writel(PLL_960_MHZ, PLLn_L_VAL(0));
 		udelay(50);
 	}
 
@@ -750,6 +744,9 @@ static void __init acpu_freq_tbl_fixup(void)
 		cpu_relax();
 		udelay(50);
 	} while (pll1_l == 0);
+	/* Overclock PLL2 to it's maximum frequency */
+	writel(PLL_1200_MHZ, PLLn_L_VAL(2));
+	udelay(50);
 	do {
 		pll2_l = readl(PLLn_L_VAL(2)) & 0x3f;
 		cpu_relax();
