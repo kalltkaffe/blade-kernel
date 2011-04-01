@@ -63,8 +63,8 @@ static int keep_snd_dev_info[SND_DEV_INFO_NUM] = {0, 0, 0};
 #define SND_SET_VOLUME_PROC 3
 #define SND_AVC_CTL_PROC 29
 #define SND_AGC_CTL_PROC 30
-  #define SND_AUDIO_LOOPBACK_PROC 37
-  #define SND_HPH_AMP_CTL_PROC 38
+#define SND_AUDIO_LOOPBACK_PROC 37
+#define SND_HPH_AMP_CTL_PROC 38
 
 #define SND_DEVICE_FM_STEREO_HEADSET_ZTE	32
 #define SND_SET_FM_HEADSET_DEVICE_PROC    41
@@ -205,6 +205,10 @@ static long snd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			break;
 		}
 
+		// FM_STEREO_HEADSET -> HEADSET
+		if(SND_DEVICE_FM_STEREO_HEADSET_ZTE == dev.device)
+			dev.device = 3;
+
 		dmsg.args.device = cpu_to_be32(dev.device);
 		dmsg.args.ear_mute = cpu_to_be32(dev.ear_mute);
 		dmsg.args.mic_mute = cpu_to_be32(dev.mic_mute);
@@ -219,30 +223,28 @@ static long snd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 		MM_INFO("snd_set_device %d %d %d\n", dev.device,
 				dev.ear_mute, dev.mic_mute);
-		
-		#if 0
+#if 0
 		rc = msm_rpc_call(snd->ept,
 			SND_SET_DEVICE_PROC,
 			&dmsg, sizeof(dmsg), 5 * HZ);
-		
-		#else
+#else
 		if(SND_DEVICE_FM_STEREO_HEADSET_ZTE == dev.device)
 		{
 			rc = msm_rpc_call(snd->ept,
 				SND_SET_FM_HEADSET_DEVICE_PROC,
 				&dmsg, sizeof(dmsg), 5 * HZ);
 		}
-		else	
+		else
 		{
-		rc = msm_rpc_call(snd->ept,
+			rc = msm_rpc_call(snd->ept,
 			SND_SET_DEVICE_PROC,
 			&dmsg, sizeof(dmsg), 5 * HZ);
-        }
-		#endif
-              if (dev.device != 28)
-              {
-		    keep_snd_dev_info[SND_DEV] = dev.device;
-              }
+        	}
+#endif
+	        if (dev.device != 28)
+        	{
+			keep_snd_dev_info[SND_DEV] = dev.device;
+              	}
 		keep_snd_dev_info[EAR_MUTE] = dev.ear_mute;
 		keep_snd_dev_info[MIC_MUTE] = dev.mic_mute;
 		break;
