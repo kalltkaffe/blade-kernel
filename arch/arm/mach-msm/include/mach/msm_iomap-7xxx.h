@@ -75,7 +75,7 @@
 #define MSM_SMEM_RAM_PHYS     0x00200000
 #define MSM_SMEM_RAM_SIZE     SZ_1M
 
-#else	/* VMSPLIT_#G */
+#else	/* VMSPLIT_3G */
 
 #define MSM_VIC_BASE          IOMEM(0xF6000000)
 #define MSM_VIC_PHYS          0xC0000000
