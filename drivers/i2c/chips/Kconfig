@@ -78,4 +78,12 @@ config SENSORS_TSL2771
 	  If you say yes here you get support for the Taos TSL2771
 	  ambient light and prox sensor.
 
+config PROX_WAKE_LOCK
+	bool "Use wake lock on proximity sensor"
+	depends on SENSORS_TSL2771
+	default n
+	help
+	  Prevents device from going to sleep while proximity sensor
+	  is in use. If unsure, say N.
+
 endmenu
