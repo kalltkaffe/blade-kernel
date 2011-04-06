@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux kernel version: 2.6.32.9
-# Tue Apr  5 12:49:02 2011
+# Wed Apr  6 07:04:56 2011
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -296,7 +296,7 @@ CONFIG_MSM_PM_TIMEOUT_HALT=y
 # CONFIG_MSM_NPA is not set
 # CONFIG_MSM_DIRECT_SCLK_ACCESS is not set
 CONFIG_MSM7200A_TLMM=y
-CONFIG_OVERCLOCK_AHB=y
+# CONFIG_OVERCLOCK_AHB is not set
 
 #
 # Processor Type
