@@ -169,6 +169,15 @@ config MACH_BLADE_CAMERA5MP
 	help
 	  Support for the ZTE blade board,5MP camera.
 
+config MACH_V9
+	depends on ARCH_MSM7X27
+	depends on !MSM_STACKED_MEMORY
+	default n
+	bool "ZTE V9"
+	select ZTE_PLATFORM
+	help
+	  Support for the ZTE MSM7x27 V9 Tab.
+
 config ZTE_FTM_FLAG_SUPPORT
 	depends on ZTE_PLATFORM
 	default y

@@ -622,7 +622,7 @@ static struct platform_device hs_device = {
 #define LCDC_API_VERS             0x00010001
 
 
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE) 
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE) 
 
 #define GPIO_LCD_RESET_OUT 	    91
 #define GPIO_LCD_SPI_CS_OUT    	122
@@ -669,7 +669,7 @@ static int msm_fb_lcdc_config(int on)
 }
 
 
-#if defined(CONFIG_MACH_BLADE)||defined(CONFIG_MACH_MOONCAKE) 
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE) 
 static int gpio_array_num[] = {
 				GPIO_LCD_SPI_SCLK_OUT, /* spi_clk */
 				GPIO_LCD_SPI_CS_OUT, /* spi_cs  */
@@ -745,7 +745,7 @@ static void config_lcdc_gpio_table(uint32_t *table, int len, unsigned enable)
 }
 
 
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE) 
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE) 
 static void lcdc_lead_config_gpios(int enable)
 #else
 static void lcdc_gordon_config_gpios(int enable)
@@ -804,7 +804,7 @@ static struct lcdc_platform_data lcdc_pdata = {
 };
 
 
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE)
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE)
 static struct msm_panel_common_pdata lcdc_qvga_panel_data = {
 	.panel_config_gpio = lcdc_lead_config_gpios,
 	.gpio_num          = gpio_array_num,
@@ -2106,7 +2106,7 @@ static struct platform_device *devices[] __initdata = {
 	&android_pmem_adsp_device,
 	&android_pmem_audio_device,
 	&msm_fb_device,
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE)
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE)
 	&lcdc_qvga_panel_device,
 #else
 	&lcdc_gordon_panel_device,
@@ -2648,7 +2648,7 @@ static void __init msm_device_i2c_init(void)
 
 
 
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE)
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE)
 
 #define MSM_GPIO_USB3V3	    21 
 static unsigned usb_config_power_on =	GPIO_CFG(MSM_GPIO_USB3V3, 0, 
@@ -2764,7 +2764,7 @@ static void __init msm7x2x_init(void)
 
 	msm_acpu_clock_init(&msm7x2x_clock_data);
 
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE)	
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE)	
 	init_usb3v3();
 	#endif
 #ifdef CONFIG_ARCH_MSM7X27
@@ -2841,7 +2841,7 @@ static void __init msm7x2x_init(void)
 		platform_device_register(&keypad_device_surf);
 #endif
 
-#if defined(CONFIG_MACH_BLADE) ||defined(CONFIG_MACH_MOONCAKE)
+#if defined(CONFIG_MACH_BLADE) || defined(CONFIG_MACH_V9) || defined(CONFIG_MACH_MOONCAKE)
 	lcdc_lead_gpio_init();
 #else
 	lcdc_gordon_gpio_init();
@@ -2992,7 +2992,7 @@ static void __init msm7x2x_map_io(void)
 
 #if 0
 #ifdef CONFIG_CACHE_L2X0
-	if (machine_is_msm7x27_surf() || machine_is_msm7x27_ffa() || machine_is_blade()) {
+	if (machine_is_msm7x27_surf() || machine_is_msm7x27_ffa() || machine_is_blade() || machine_is_v9()) {
 		l2x0_init(MSM_L2CC_BASE, 0x00068012, 0xfe000000);
 	}
 	
@@ -3096,6 +3096,21 @@ MACHINE_START(MSM7X25_FFA, "QCT MSM7x25 FFA")
 MACHINE_END
 
 MACHINE_START(BLADE, "blade ZTE handset")
+#ifdef CONFIG_MSM_DEBUG_UART
+	.phys_io        = MSM_DEBUG_UART_PHYS,
+	.io_pg_offst    = ((MSM_DEBUG_UART_BASE) >> 18) & 0xfffc,
+#endif
+	.boot_params	= PHYS_OFFSET + 0x100,
+#ifdef CONFIG_ZTE_PLATFORM
+        .fixup          = zte_fixup,
+#endif
+	.map_io		= msm7x2x_map_io,
+	.init_irq	= msm7x2x_init_irq,
+	.init_machine	= msm7x2x_init,
+	.timer		= &msm_timer,
+MACHINE_END
+
+MACHINE_START(BLADE, "v9 ZTE handset")
 #ifdef CONFIG_MSM_DEBUG_UART
 	.phys_io        = MSM_DEBUG_UART_PHYS,
 	.io_pg_offst    = ((MSM_DEBUG_UART_BASE) >> 18) & 0xfffc,
