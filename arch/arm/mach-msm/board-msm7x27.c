@@ -3110,7 +3110,7 @@ MACHINE_START(BLADE, "blade ZTE handset")
 	.timer		= &msm_timer,
 MACHINE_END
 
-MACHINE_START(BLADE, "v9 ZTE handset")
+MACHINE_START(V9, "v9 ZTE handset")
 #ifdef CONFIG_MSM_DEBUG_UART
 	.phys_io        = MSM_DEBUG_UART_PHYS,
 	.io_pg_offst    = ((MSM_DEBUG_UART_BASE) >> 18) & 0xfffc,
