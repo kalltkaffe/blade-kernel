@@ -153,6 +153,15 @@ config F3_LOG
         help
           Support for F3 log.	  
 
+config MACH_MOONCAKE
+        depends on ARCH_MSM7X27
+        depends on !MSM_STACKED_MEMORY
+        default n
+        bool "ZTE mooncake board."
+        select ZTE_PLATFORM
+        help
+          Support for the ZTE mooncake board.
+
 config MACH_BLADE
 	depends on ARCH_MSM7X27
 	depends on !MSM_STACKED_MEMORY
